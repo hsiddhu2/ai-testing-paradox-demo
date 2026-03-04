@@ -217,3 +217,4 @@ class AuthService:
             entries = [e for e in entries if e["event_type"] == event_type]
         return entries
 
+

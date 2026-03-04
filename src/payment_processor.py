@@ -176,3 +176,4 @@ class PaymentProcessor:
         self._log_transaction("REFUND_PROCESSED",
                             f"Transaction {transaction_id}: {reason}")
         return transaction
+

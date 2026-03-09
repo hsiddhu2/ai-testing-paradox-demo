@@ -15,7 +15,7 @@ It demonstrates three validation strategies with hands-on examples:
 
 ```bash
 # Clone the project
-git clone <your-repo-url>
+git clone https://github.com/hsiddhu2/ai-testing-paradox-demo.git
 cd ai-testing-paradox-demo
 
 # Create virtual environment

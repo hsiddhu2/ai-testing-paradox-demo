@@ -56,8 +56,10 @@ class TestPaymentProcessor:
             self.pp.process_payment(15000.00, self.valid_card)
 
     def test_process_payment_invalid_card(self):
-        result = self.pp.process_payment(50.00, "0000000000000000")
+        # Use a card that fails Luhn algorithm validation
+        result = self.pp.process_payment(50.00, "1234567890123456")
         assert result["status"] == PaymentStatus.DECLINED
+        assert result["reason"] == "Invalid card"
 
     # --- Fraud Detection & Governance ---
 

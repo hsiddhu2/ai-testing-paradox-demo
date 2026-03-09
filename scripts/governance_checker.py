@@ -52,15 +52,52 @@ def check_mutation_kill_rate(threshold=70.0):
     In a real pipeline, this reads mutmut results.
     """
     try:
+        # Get the mutation results
         result = subprocess.run(
             ["mutmut", "results"], capture_output=True, text=True, timeout=30
         )
         output = result.stdout
 
-        # Parse mutmut output for killed/survived counts
-        killed = output.count("Killed")
-        survived = output.count("Survived")
-        total = killed + survived
+        # Parse mutmut output - it only shows survivors
+        # Look for pattern like "Survived 🙁 (295)"
+        import re
+        
+        survived_match = re.search(r'Survived.*?\((\d+)\)', output)
+        survived = int(survived_match.group(1)) if survived_match else 0
+        
+        # Get total from mutmut show summary (run mutmut with no args shows stats)
+        stats_result = subprocess.run(
+            ["mutmut", "run", "--help"], capture_output=True, text=True, timeout=5
+        )
+        
+        # Alternative: Read from .mutmut-cache if it exists
+        # For now, we'll estimate from the last run
+        # In the CI output, we saw: 390 total, 95 killed, 295 survived
+        # We can only get survived from results, so we need another approach
+        
+        # Better approach: Use mutmut junitxml which has full stats
+        junit_result = subprocess.run(
+            ["mutmut", "junitxml"], capture_output=True, text=True, timeout=30
+        )
+        
+        # Parse JUnit XML for total tests
+        junit_output = junit_result.stdout
+        tests_match = re.search(r'tests="(\d+)"', junit_output)
+        failures_match = re.search(r'failures="(\d+)"', junit_output)
+        
+        if tests_match and failures_match:
+            total = int(tests_match.group(1))
+            survived = int(failures_match.group(1))
+            killed = total - survived
+        else:
+            # Fallback: if we only have survived count, we can't calculate kill rate accurately
+            return GovernanceResult(
+                "Mutation Kill Rate",
+                False,
+                f"Found {survived} surviving mutants, but cannot determine total. "
+                "Run mutation testing to get complete results.",
+                "WARNING"
+            )
 
         if total == 0:
             return GovernanceResult(

@@ -16,6 +16,7 @@ build/
 htmlcov/
 .mutmut-cache
 coverage.json
+mutation_results.xml
 mutants/
 
 # IDE
@@ -27,3 +28,6 @@ mutants/
 
 # Project specific
 *.log
+
+# Private notes and speaker materials
+private/

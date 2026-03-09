@@ -15,14 +15,14 @@ It demonstrates three validation strategies with hands-on examples:
 
 ```bash
 # Clone the project
-git clone https://github.com/yourusername/ai-testing-paradox-demo.git
+git clone <your-repo-url>
 cd ai-testing-paradox-demo
 
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install dependencies (Note: mutmut 2.4.5 is required - newer versions have CLI changes)
 pip install -r requirements.txt
 
 # Run the test suite
@@ -58,10 +58,11 @@ ai-testing-paradox-demo/
 │   └── user_manager.py         # User management (moderate complexity)
 ├── tests/
 │   ├── __init__.py
-│   ├── test_auth_ai_generated.py      # AI-generated tests (intentionally weak)
-│   ├── test_auth_mutation_hardened.py  # Tests improved via mutation testing
-│   ├── test_payment_processor.py      # Payment tests with governance checks
-│   └── test_user_manager.py           # User management tests
+│   ├── test_auth_ai_generated.py         # AI-generated tests (intentionally weak)
+│   ├── test_auth_mutation_hardened.py    # Tests improved via mutation testing
+│   ├── test_auth_additional_mutants.py   # Additional tests targeting survivors
+│   ├── test_payment_processor.py         # Payment tests with governance checks
+│   └── test_user_manager.py              # User management tests
 ├── scripts/
 │   ├── hotspot_analyzer.py     # Strategy 2: Git hotspot analysis
 │   ├── governance_checker.py   # Strategy 3: Governance validation
@@ -70,7 +71,8 @@ ai-testing-paradox-demo/
 │   └── workflows/
 │       └── ai_test_validation.yml  # CI/CD with all 3 strategies
 ├── setup.cfg                   # mutmut configuration
-├── requirements.txt
+├── requirements.txt            # Python dependencies (mutmut 2.4.5 required)
+├── simulate_ci.sh              # Local CI/CD simulation script
 └── README.md
 ```
 
@@ -89,8 +91,11 @@ pytest tests/test_auth_ai_generated.py --cov=src/auth_service --cov-report=term-
 
 ### Step 2: Run mutation testing to reveal the truth
 ```bash
+# Clear any previous mutation cache
+rm -f .mutmut-cache
+
 # Run mutmut against AI-generated tests only
-mutmut run --paths-to-mutate=src/auth_service.py --tests-dir=tests/test_auth_ai_generated.py
+mutmut run --paths-to-mutate=src/auth_service.py --tests-dir=tests/ --runner="python -m pytest tests/test_auth_ai_generated.py -x --tb=no -q"
 
 # See surviving mutants (bugs the tests missed!)
 mutmut results
@@ -99,8 +104,11 @@ mutmut show 1  # Inspect first surviving mutant
 
 ### Step 3: Compare with mutation-hardened tests
 ```bash
-# Run mutation-hardened tests
-mutmut run --paths-to-mutate=src/auth_service.py --tests-dir=tests/test_auth_mutation_hardened.py
+# Clear previous cache
+rm -f .mutmut-cache
+
+# Run mutation-hardened tests (uses setup.cfg configuration)
+mutmut run
 
 # Compare kill rates — much better!
 mutmut results
@@ -134,6 +142,24 @@ python scripts/governance_checker.py
 # - Coverage on hotspot files
 # - Audit trail completeness
 # - Approval gate compliance
+```
+
+---
+
+## Local CI/CD Simulation
+
+Run all three strategies locally (simulates the GitHub Actions workflow):
+
+```bash
+# Make sure you're in the project root with venv activated
+./simulate_ci.sh
+
+# This runs:
+# 1. All tests
+# 2. Coverage check (minimum 80%)
+# 3. Mutation testing
+# 4. Hotspot analysis
+# 5. Governance validation
 ```
 
 ---
